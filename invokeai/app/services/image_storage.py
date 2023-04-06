@@ -4,15 +4,13 @@ import datetime
 import os
 from glob import glob
 from abc import ABC, abstractmethod
-from enum import Enum
 from pathlib import Path
 from queue import Queue
-from typing import Callable, Dict, List
+from typing import Dict, List
 
 from PIL.Image import Image
 import PIL.Image as PILImage
-from pydantic import BaseModel
-from invokeai.app.datatypes.image import ImageField, ImageResponse, ImageType
+from invokeai.app.datatypes.image import ImageResponse, ImageType
 from invokeai.app.datatypes.metadata import ImageMetadata
 from invokeai.app.services.item_storage import PaginatedResults
 from invokeai.app.util.save_thumbnail import save_thumbnail
@@ -67,6 +65,7 @@ class DiskImageStorage(ImageStorageBase):
         self.__cache = dict()
         self.__cache_ids = Queue()
         self.__max_cache_size = 10  # TODO: get this from config
+        print(output_folder)
 
         Path(output_folder).mkdir(parents=True, exist_ok=True)
 
