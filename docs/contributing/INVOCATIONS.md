@@ -195,8 +195,7 @@ class ImageOutput(BaseInvocationOutput):
 ```
 
 The resultant schema (and any API client or types generated from it) will now
-have see `type` as string literal `"image"` and `image` as an `ImageField`
-object.
+see `type` as string literal `"image"` and `image` as an `ImageField` object.
 
 See this `pydantic` issue for discussion on this solution:
 <https://github.com/pydantic/pydantic/discussions/4577>
