@@ -6,6 +6,6 @@ class ImageMetadata(BaseModel):
 
     timestamp: int = Field(description="The creation timestamp of the image")
     width: int = Field(description="The width of the image in pixels")
-    height: int = Field(description="The width of the image in pixels")
+    height: int = Field(description="The height of the image in pixels")
     # TODO: figure out metadata
     sd_metadata: Optional[dict] = Field(default={}, description="The image's SD-specific metadata")
