@@ -2,9 +2,9 @@
 
 from typing import Literal, Optional
 from pydantic import BaseModel, Field
-from torch import Tensor
 import torch
 
+from ..util.step_callback import step_callback
 from ...backend.model_management.model_manager import ModelManager
 from ...backend.util.devices import choose_torch_device, torch_dtype
 from ...backend.stable_diffusion.diffusion.shared_invokeai_diffusion import PostprocessingSettings
@@ -13,13 +13,10 @@ from ...backend.prompting.conditioning import get_uc_and_c_and_ec
 from ...backend.stable_diffusion.diffusers_pipeline import ConditioningData, StableDiffusionGeneratorPipeline
 from .baseinvocation import BaseInvocation, BaseInvocationOutput, InvocationContext
 import numpy as np
-from accelerate.utils import set_seed
 from ..services.image_storage import ImageType
 from .baseinvocation import BaseInvocation, InvocationContext
 from .image import ImageField, ImageOutput
-from ...backend.generator import Generator
 from ...backend.stable_diffusion import PipelineIntermediateState
-from ...backend.util.util import image_to_dataURL
 from diffusers.schedulers import SchedulerMixin as Scheduler
 import diffusers
 from diffusers import DiffusionPipeline
@@ -145,28 +142,9 @@ class TextToLatentsInvocation(BaseInvocation):
 
     # TODO: pass this an emitter method or something? or a session for dispatching?
     def dispatch_progress(
-        self, context: InvocationContext, sample: Tensor, step: int
+        self, context: InvocationContext, intermediate_state: PipelineIntermediateState
     ) -> None:  
-        # TODO: only output a preview image when requested
-        image = Generator.sample_to_lowres_estimated_image(sample)
-
-        (width, height) = image.size
-        width *= 8
-        height *= 8
-
-        dataURL = image_to_dataURL(image, image_format="JPEG")
-
-        context.services.events.emit_generator_progress(
-            context.graph_execution_state_id,
-            self.id,
-            {
-                "width": width,
-                "height": height,
-                "dataURL": dataURL
-            },
-            step,
-            self.steps,
-        )
+        step_callback(context=context, intermediate_state=intermediate_state, total_steps=self.steps, node_id=self.id)
     
     def get_model(self, model_manager: ModelManager) -> StableDiffusionGeneratorPipeline:
         model_info = model_manager.get_model(self.model)
@@ -214,7 +192,7 @@ class TextToLatentsInvocation(BaseInvocation):
         noise = context.services.latents.get(self.noise.latents_name)
 
         def step_callback(state: PipelineIntermediateState):
-            self.dispatch_progress(context, state.latents, state.step)
+            self.dispatch_progress(context, state)
 
         model = self.get_model(context.services.model_manager)
         conditioning_data = self.get_conditioning_data(model)
@@ -253,7 +231,7 @@ class LatentsToLatentsInvocation(TextToLatentsInvocation):
         latent = context.services.latents.get(self.latents.latents_name)
 
         def step_callback(state: PipelineIntermediateState):
-            self.dispatch_progress(context, state.latents, state.step)
+            self.dispatch_progress(context, state)
 
         model = self.get_model(context.services.model_manager)
         conditioning_data = self.get_conditioning_data(model)

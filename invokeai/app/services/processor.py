@@ -42,11 +42,14 @@ class DefaultInvocationProcessor(InvocationProcessorABC):
                 invocation = graph_execution_state.execution_graph.get_node(
                     queue_item.invocation_id
                 )
+                invocation_dict = invocation.dict()
+                source_id = graph_execution_state.prepared_source_mapping.get(invocation.id, None)
 
                 # Send starting event
                 self.__invoker.services.events.emit_invocation_started(
                     graph_execution_state_id=graph_execution_state.id,
-                    invocation_id=invocation.id,
+                    invocation=invocation_dict,
+                    source_id=source_id,
                 )
 
                 # Invoke
@@ -75,7 +78,8 @@ class DefaultInvocationProcessor(InvocationProcessorABC):
                     # Send complete event
                     self.__invoker.services.events.emit_invocation_complete(
                         graph_execution_state_id=graph_execution_state.id,
-                        invocation_id=invocation.id,
+                        invocation=invocation_dict,
+                        source_id=source_id,
                         result=outputs.dict(),
                     )
 
@@ -99,7 +103,8 @@ class DefaultInvocationProcessor(InvocationProcessorABC):
                     # Send error event
                     self.__invoker.services.events.emit_invocation_error(
                         graph_execution_state_id=graph_execution_state.id,
-                        invocation_id=invocation.id,
+                        invocation=invocation_dict,
+                        source_id=source_id,
                         error=error,
                     )
 

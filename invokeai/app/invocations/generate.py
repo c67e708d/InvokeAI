@@ -4,7 +4,6 @@ from functools import partial
 from typing import Literal, Optional, Union
 
 import numpy as np
-from torch import Tensor
 
 from pydantic import Field
 
@@ -13,8 +12,7 @@ from .baseinvocation import BaseInvocation, InvocationContext
 from .image import ImageOutput
 from ...backend.generator import Txt2Img, Img2Img, Inpaint, InvokeAIGenerator
 from ...backend.stable_diffusion import PipelineIntermediateState
-from ..datatypes.exceptions import CanceledException
-from ..util.step_callback import diffusers_step_callback_adapter
+from invokeai.app.util.step_callback import step_callback
 
 SAMPLER_NAME_VALUES = Literal[
     tuple(InvokeAIGenerator.schedulers())
@@ -45,25 +43,9 @@ class TextToImageInvocation(BaseInvocation):
     def dispatch_progress(
         self, context: InvocationContext, intermediate_state: PipelineIntermediateState
     ) -> None:
-        if (context.services.queue.is_canceled(context.graph_execution_state_id)):
-            raise CanceledException
-
-        step = intermediate_state.step
-        if intermediate_state.predicted_original is not None:
-            # Some schedulers report not only the noisy latents at the current timestep,
-            # but also their estimate so far of what the de-noised latents will be.
-            sample = intermediate_state.predicted_original
-        else:
-            sample = intermediate_state.latents
-        
-        diffusers_step_callback_adapter(sample, step, steps=self.steps, id=self.id, context=context)
+        step_callback(context=context, intermediate_state=intermediate_state, total_steps=self.steps, node_id=self.id)
 
     def invoke(self, context: InvocationContext) -> ImageOutput:
-        # def step_callback(state: PipelineIntermediateState):
-        #     if (context.services.queue.is_canceled(context.graph_execution_state_id)):
-        #         raise CanceledException
-        #     self.dispatch_progress(context, state.latents, state.step)
-
         # Handle invalid model parameter
         # TODO: figure out if this can be done via a validator that uses the model_cache
         # TODO: How to get the default model name now?
@@ -111,18 +93,7 @@ class ImageToImageInvocation(TextToImageInvocation):
     def dispatch_progress(
         self, context: InvocationContext, intermediate_state: PipelineIntermediateState
     ) -> None:  
-        if (context.services.queue.is_canceled(context.graph_execution_state_id)):
-            raise CanceledException
-
-        step = intermediate_state.step
-        if intermediate_state.predicted_original is not None:
-            # Some schedulers report not only the noisy latents at the current timestep,
-            # but also their estimate so far of what the de-noised latents will be.
-            sample = intermediate_state.predicted_original
-        else:
-            sample = intermediate_state.latents
-
-        diffusers_step_callback_adapter(sample, step, steps=self.steps, id=self.id, context=context)
+        step_callback(context=context, intermediate_state=intermediate_state, total_steps=self.steps, node_id=self.id)
 
     def invoke(self, context: InvocationContext) -> ImageOutput:
         image = (
@@ -183,18 +154,7 @@ class InpaintInvocation(ImageToImageInvocation):
     def dispatch_progress(
         self, context: InvocationContext, intermediate_state: PipelineIntermediateState
     ) -> None:  
-        if (context.services.queue.is_canceled(context.graph_execution_state_id)):
-            raise CanceledException
-
-        step = intermediate_state.step
-        if intermediate_state.predicted_original is not None:
-            # Some schedulers report not only the noisy latents at the current timestep,
-            # but also their estimate so far of what the de-noised latents will be.
-            sample = intermediate_state.predicted_original
-        else:
-            sample = intermediate_state.latents
-
-        diffusers_step_callback_adapter(sample, step, steps=self.steps, id=self.id, context=context)
+        step_callback(context=context, intermediate_state=intermediate_state, total_steps=self.steps, node_id=self.id)
 
     def invoke(self, context: InvocationContext) -> ImageOutput:
         image = (

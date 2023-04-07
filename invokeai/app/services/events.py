@@ -6,6 +6,7 @@ ProgressImage = TypedDict(
     "ProgressImage", {"dataURL": str, "width": int, "height": int}
 )
 
+
 class EventServiceBase:
     session_event: str = "session_event"
 
@@ -25,58 +26,71 @@ class EventServiceBase:
     def emit_generator_progress(
         self,
         graph_execution_state_id: str,
-        invocation_id: str,
+        invocation: Dict,
+        source_id: str,
         progress_image: ProgressImage | None,
         step: int,
         total_steps: int,
     ) -> None:
-        """Emitted when there is generation progress"""
-        self.__emit_session_event(
-            event_name="generator_progress",
-            payload=dict(
-                graph_execution_state_id=graph_execution_state_id,
-                invocation_id=invocation_id,
-                progress_image=progress_image,
-                step=step,
-                total_steps=total_steps,
-            ),
-        )
+            """Emitted when there is generation progress"""
+            self.__emit_session_event(
+                event_name="generator_progress",
+                payload=dict(
+                    graph_execution_state_id=graph_execution_state_id,
+                    invocation=invocation,
+                    source_id=source_id,
+                    progress_image=progress_image,
+                    step=step,
+                    total_steps=total_steps,
+                ),
+            )
 
     def emit_invocation_complete(
-        self, graph_execution_state_id: str, invocation_id: str, result: Dict
+        self,
+        graph_execution_state_id: str,
+        invocation: Dict,
+        source_id: str,
+        result: Dict,
     ) -> None:
         """Emitted when an invocation has completed"""
         self.__emit_session_event(
             event_name="invocation_complete",
             payload=dict(
                 graph_execution_state_id=graph_execution_state_id,
-                invocation_id=invocation_id,
+                invocation=invocation,
+                source_id=source_id,
                 result=result,
             ),
         )
 
     def emit_invocation_error(
-        self, graph_execution_state_id: str, invocation_id: str, error: str
+        self,
+        graph_execution_state_id: str,
+        invocation: Dict,
+        source_id: str,
+        error: str,
     ) -> None:
         """Emitted when an invocation has completed"""
         self.__emit_session_event(
             event_name="invocation_error",
             payload=dict(
                 graph_execution_state_id=graph_execution_state_id,
-                invocation_id=invocation_id,
+                invocation=invocation,
+                source_id=source_id,
                 error=error,
             ),
         )
 
     def emit_invocation_started(
-        self, graph_execution_state_id: str, invocation_id: str
+        self, graph_execution_state_id: str, invocation: Dict, source_id: str
     ) -> None:
         """Emitted when an invocation has started"""
         self.__emit_session_event(
             event_name="invocation_started",
             payload=dict(
                 graph_execution_state_id=graph_execution_state_id,
-                invocation_id=invocation_id,
+                invocation=invocation,
+                source_id=source_id,
             ),
         )
 
