@@ -12,7 +12,8 @@ from typing import Callable, Dict, List
 from PIL.Image import Image
 import PIL.Image as PILImage
 from pydantic import BaseModel
-from invokeai.app.datatypes.image import ImageField, ImageResponse, ImageType
+from invokeai.app.api.datatypes.images import ImageResponse
+from invokeai.app.datatypes.image import ImageField, ImageType
 from invokeai.app.datatypes.metadata import ImageMetadata
 from invokeai.app.services.item_storage import PaginatedResults
 from invokeai.app.util.save_thumbnail import save_thumbnail
@@ -86,9 +87,8 @@ class DiskImageStorage(ImageStorageBase):
         image_paths = glob(f"{dir_path}/*.png")
         count = len(image_paths)
 
-        # TODO: do all platforms support `getmtime`? seem to recall some do not...
         sorted_image_paths = sorted(
-            glob(f"{dir_path}/*.png"), key=os.path.getmtime, reverse=True
+            glob(f"{dir_path}/*.png"), key=os.path.getctime, reverse=True
         )
 
         page_of_image_paths = sorted_image_paths[
@@ -103,13 +103,13 @@ class DiskImageStorage(ImageStorageBase):
             page_of_images.append(
                 ImageResponse(
                     image_type=image_type.value,
-                    image_name=os.path.basename(path),
+                    image_name=filename,
                     # TODO: DiskImageStorage should not be building URLs...?
                     image_url=f"api/v1/images/{image_type.value}/{filename}",
                     thumbnail_url=f"api/v1/images/{image_type.value}/thumbnails/{os.path.splitext(filename)[0]}.webp",
                     # TODO: Creation of this object should happen elsewhere, just making it fit here so it works
                     metadata=ImageMetadata(
-                        timestamp=int(os.path.splitext(filename)[0].split("_")[-1]),
+                        timestamp=os.path.getctime(path),
                         width=img.width,
                         height=img.height,
                     ),

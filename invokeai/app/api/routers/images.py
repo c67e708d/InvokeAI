@@ -7,7 +7,7 @@ from fastapi import Path, Query, Request, UploadFile
 from fastapi.responses import FileResponse, Response
 from fastapi.routing import APIRouter
 from PIL import Image
-from invokeai.app.datatypes.image import ImageResponse
+from invokeai.app.api.datatypes.images import ImageResponse
 from invokeai.app.services.item_storage import PaginatedResults
 
 from ...services.image_storage import ImageType
